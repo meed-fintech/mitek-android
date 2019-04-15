@@ -1,0 +1,17 @@
+{
+  "name": "MiSnapCordovaPlugin",
+  "version": "0.0.1",
+  "description": "Cordova Plugin for MiSnap",
+  "cordova": {
+    "id": "cordova-plugin-misnap",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "",
+  "license": "ISC"
+}

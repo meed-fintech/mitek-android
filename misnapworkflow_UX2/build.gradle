@@ -1,0 +1,92 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion project.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion project.coreMinSdk
+        targetSdkVersion project.targetSdkVersion
+
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            all {
+                jvmArgs '-noverify'
+//                jacoco {
+//                    includeNoLocationClasses = true
+//                }
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+            minifyEnabled false
+            shrinkResources false
+        }
+
+        release {
+            signingConfig signingConfigs.debug
+            debuggable false
+            jniDebuggable false
+            minifyEnabled true
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "com.android.support:appcompat-v7:$supportVersion"
+    implementation "com.android.support:percent:$supportVersion"
+    implementation "com.android.support.constraint:constraint-layout:$constraintLayoutVersion"
+
+    implementation "org.greenrobot:eventbus:$eventbusVersion"
+
+    // Add dependency for MiSnap external API
+    implementation (project(':cordova-plugin-misnap:api-release'))
+
+    implementation (project(':cordova-plugin-misnap:misnapscience-release'))
+
+    implementation (project(':cordova-plugin-misnap:misnapcamera-release'))
+
+    // Add dependency for MiSnap external MibiData
+    implementation (project(':cordova-plugin-misnap:mibidata-release'))
+
+    // Add dependency for rotating bitmap
+    implementation (project(':cordova-plugin-misnap:imageutils-release'))
+
+    // Add dependency for MiSnap
+    implementation project(':cordova-plugin-misnap:misnapcontroller')
+
+    // Add dependency for barcode scanning
+    implementation (project(':cordova-plugin-misnap:barcode-release'))
+    implementation project(':cordova-plugin-misnap:barcodecontroller')
+
+    // Add dependency for credit card scanning
+    //implementation (project(':cardio-release'))
+    //implementation project(':creditcardcontroller')
+
+    // Add dependencies for Unit Testing
+    androidTestImplementation "com.linkedin.dexmaker:dexmaker-mockito:$dexmakerVersion"
+
+    // Add dependencies for automated Black-box testing with Robotium
+    androidTestImplementation "com.jayway.android.robotium:robotium-solo:$robotiumVersion"
+    androidTestImplementation "com.android.support.test:runner:$supportTestVersion"
+    androidTestImplementation "com.android.support.test:rules:$supportTestVersion"
+
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
+    testImplementation "junit:junit:$junitVersion"
+    testImplementation "com.squareup.assertj:assertj-android:$androidAssertJVersion"
+}

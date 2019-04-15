@@ -1,0 +1,46 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion project.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion project.coreMinSdk
+        targetSdkVersion project.targetSdkVersion
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+            minifyEnabled false
+            shrinkResources false
+        }
+
+        release {
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "com.android.support:appcompat-v7:$supportVersion"
+    implementation "com.android.support:support-fragment:$supportVersion"
+
+    implementation "org.greenrobot:eventbus:$eventbusVersion"
+
+    implementation (project(':cordova-plugin-misnap:api-release'))
+
+    implementation (project(':cordova-plugin-misnap:misnapcamera-release'))
+
+    implementation (project(':cordova-plugin-misnap:imageutils-release'))
+
+    implementation (project(':cordova-plugin-misnap:barcode-release'))
+}

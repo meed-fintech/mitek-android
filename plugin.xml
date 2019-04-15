@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-misnap" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+	<name>MiSnapCordovaPlugin</name>
+	<js-module name="MiSnapCordovaPlugin" src="www/MiSnapCordovaPlugin.js">
+		<clobbers target="cordova.plugins.MiSnapCordovaPlugin" />
+	</js-module>
+	<platform name="android">
+		<config-file parent="/*" target="res/xml/config.xml">
+			<feature name="MiSnapCordovaPlugin">
+				<param name="android-package" value="cordova.plugin.misnap.MiSnapCordovaPlugin" />
+			</feature>
+		</config-file>
+		<config-file parent="/*" target="AndroidManifest.xml">
+			
+		</config-file>
+		<source-file src="src/android/MiSnapCordovaPlugin.java" target-dir="src/cordova-plugin-misnap/MiSnapCordovaPlugin" />
+		<framework src="build-extras.gradle" custom="true" type="gradleReference" />
+		<framework src="misnapworkflow_UX2" custom="true" type="projectReference" />
+		<framework src="api-release" custom="true" />
+		<framework src="misnapscience-release" custom="true" />
+		<framework src="misnapcamera-release" custom="true" />
+		<framework src="mibidata-release" custom="true" />
+		<framework src="imageutils-release" custom="true" />
+		<framework src="misnapcontroller" custom="true" />
+		<framework src="sanselan-release" custom="true" />
+		<framework src="barcode-release" custom="true" />
+		<framework src="barcodecontroller" custom="true" />
+	</platform>
+</plugin>
