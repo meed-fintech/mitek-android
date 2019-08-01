@@ -10,6 +10,7 @@ import java.util.List;
  *
  * This class keeps all the Fragment loading, UI-related code out of the UX workflow code.
  * It's swapping the current workflow fragment for another.
+ * All transactions are executed immediately for robustness, so that calls to this class are atomic
  */
 public class FragmentLoader {
 
@@ -25,6 +26,7 @@ public class FragmentLoader {
                 .replace(containerViewId, nextFragment, getTag(nextFragment.getClass()))
                 .commit();
 
+        fm.executePendingTransactions();
         return true;
     }
 
@@ -53,6 +55,7 @@ public class FragmentLoader {
                 .add(containerViewId, overlayFragment, fragmentTag)
                 .commit();
 
+        fm.executePendingTransactions();
         return true;
     }
 
@@ -75,6 +78,8 @@ public class FragmentLoader {
                 }
             }
         }
+
+        fm.executePendingTransactions();
     }
 
     public static String getTag(Class<? extends Fragment> fragmentClass) {
@@ -83,6 +88,7 @@ public class FragmentLoader {
 
     public static void removeFragment(FragmentManager supportFragmentManager, Fragment fragment) {
         supportFragmentManager.beginTransaction().remove(fragment).commit();
+        supportFragmentManager.executePendingTransactions();
     }
 
     public static Fragment findFragmentByTag(FragmentManager fm, String tag) {

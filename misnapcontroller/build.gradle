@@ -19,9 +19,6 @@ android {
             includeAndroidResources = true
             all {
                 jvmArgs '-noverify'
-//                jacoco {
-//                    includeNoLocationClasses = true
-//                }
             }
         }
 
@@ -34,6 +31,7 @@ android {
             jniDebuggable true
             minifyEnabled false
             shrinkResources false
+            testCoverageEnabled true
         }
 
         release {
@@ -58,14 +56,5 @@ dependencies {
     implementation (project(':cordova-plugin-misnap:misnapcamera-release'))
     implementation (project(':cordova-plugin-misnap:misnapscience-release'))
 
-    testImplementation "junit:junit:$junitVersion"
-    testImplementation "org.robolectric:robolectric:$robolectricVersion"
-    testImplementation "org.mockito:mockito-core:$mockitoVersion"
 
-    androidTestImplementation "com.android.support.test:runner:$supportTestVersion"
-    androidTestImplementation "com.android.support.test:rules:$supportTestVersion"
-    androidTestImplementation "com.linkedin.dexmaker:dexmaker-mockito:$dexmakerVersion"
-    androidTestImplementation "com.jayway.android.robotium:robotium-solo:$robotiumVersion"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espressoVersion"
-    androidTestUtil "com.android.support.test:orchestrator:$supportTestVersion"
 }

@@ -31,7 +31,8 @@ public class BarcodeFragment extends ControllerFragment {
         super.deinit();
         if (analyzer != null) {
             analyzer.deinit();
-            analyzer = null;
+            //no longer nulling the analyzer to avoid crash where onConfigurationChanged() gets called in a different thread than deinit()
+//            analyzer = null;
         }
 
         if (barcodeController != null) {
@@ -84,10 +85,9 @@ public class BarcodeFragment extends ControllerFragment {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-
-
-
-        analyzer.updateOrientation(newConfig.orientation, getDocumentOrientation());
+        if (analyzer != null) {
+            analyzer.updateOrientation(newConfig.orientation, getDocumentOrientation());
+        }
     }
 
     private int getDocumentOrientation() {

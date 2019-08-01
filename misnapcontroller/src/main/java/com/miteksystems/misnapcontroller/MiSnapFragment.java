@@ -56,7 +56,8 @@ public class MiSnapFragment extends ControllerFragment {
 
         if (analyzer != null) {
             analyzer.deinit();
-            analyzer = null;
+            //no longer null because onOrientationChanged() could be called in a different thread than deinit()
+//            analyzer = null;
         }
 
         stopOrientationListener();

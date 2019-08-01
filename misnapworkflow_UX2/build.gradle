@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 
+
 android {
     compileSdkVersion project.compileSdkVersion
 
@@ -19,9 +20,6 @@ android {
             includeAndroidResources = true
             all {
                 jvmArgs '-noverify'
-//                jacoco {
-//                    includeNoLocationClasses = true
-//                }
             }
         }
     }
@@ -32,6 +30,7 @@ android {
             jniDebuggable true
             minifyEnabled false
             shrinkResources false
+            testCoverageEnabled true
         }
 
         release {
@@ -74,19 +73,11 @@ dependencies {
     implementation project(':cordova-plugin-misnap:barcodecontroller')
 
     // Add dependency for credit card scanning
-    //implementation (project(':cardio-release'))
-    //implementation project(':creditcardcontroller')
+    //implementation (project(':cordova-plugin-misnap:cardio-release'))
+    //implementation project(':cordova-plugin-misnap:creditcardcontroller')
 
     // Add dependencies for Unit Testing
-    androidTestImplementation "com.linkedin.dexmaker:dexmaker-mockito:$dexmakerVersion"
 
     // Add dependencies for automated Black-box testing with Robotium
-    androidTestImplementation "com.jayway.android.robotium:robotium-solo:$robotiumVersion"
-    androidTestImplementation "com.android.support.test:runner:$supportTestVersion"
-    androidTestImplementation "com.android.support.test:rules:$supportTestVersion"
 
-    testImplementation "org.mockito:mockito-core:$mockitoVersion"
-    testImplementation "org.robolectric:robolectric:$robolectricVersion"
-    testImplementation "junit:junit:$junitVersion"
-    testImplementation "com.squareup.assertj:assertj-android:$androidAssertJVersion"
 }

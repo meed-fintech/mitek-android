@@ -38,7 +38,7 @@ class MiSnapController implements IFrameHandler {
     private ExecutorService executorService;
     private CameraParamMgr cameraParamMgr;
     private AtomicBoolean analyzingInProgress = new AtomicBoolean();
-    private static final long DELAY_BEFORE_ALLOWING_SNAP_IN_MS = 1000;
+    static long DELAY_BEFORE_ALLOWING_SNAP_IN_MS = 1000;
     private long lastGoodSnapTimeInMs;
 
     private static final String TAG = MiSnapController.class.getName();
