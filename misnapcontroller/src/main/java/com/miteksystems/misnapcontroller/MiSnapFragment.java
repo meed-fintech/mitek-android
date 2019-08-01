@@ -1,11 +1,11 @@
 package com.miteksystems.misnapcontroller;
 
-import android.arch.lifecycle.Observer;
+import androidx.lifecycle.Observer;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.hardware.SensorManager;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.Log;
 import android.view.OrientationEventListener;
 import android.view.ViewGroup;
@@ -56,7 +56,8 @@ public class MiSnapFragment extends ControllerFragment {
 
         if (analyzer != null) {
             analyzer.deinit();
-            analyzer = null;
+            //no longer null because onOrientationChanged() could be called in a different thread than deinit()
+//            analyzer = null;
         }
 
         stopOrientationListener();

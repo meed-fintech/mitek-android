@@ -2,7 +2,7 @@ package com.miteksystems.misnap.misnapworkflow_UX2.ui.screen;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;

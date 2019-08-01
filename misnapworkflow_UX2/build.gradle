@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 
+
 android {
     compileSdkVersion project.compileSdkVersion
 
@@ -7,7 +8,7 @@ android {
         minSdkVersion project.coreMinSdk
         targetSdkVersion project.targetSdkVersion
 
-        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     lintOptions {
@@ -19,9 +20,6 @@ android {
             includeAndroidResources = true
             all {
                 jvmArgs '-noverify'
-//                jacoco {
-//                    includeNoLocationClasses = true
-//                }
             }
         }
     }
@@ -32,6 +30,7 @@ android {
             jniDebuggable true
             minifyEnabled false
             shrinkResources false
+            testCoverageEnabled true
         }
 
         release {
@@ -47,9 +46,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.android.support:appcompat-v7:$supportVersion"
-    implementation "com.android.support:percent:$supportVersion"
-    implementation "com.android.support.constraint:constraint-layout:$constraintLayoutVersion"
+    implementation "androidx.appcompat:appcompat:1.0.0"
+    implementation "androidx.percentlayout:percentlayout:1.0.0"
+    implementation "androidx.constraintlayout:constraintlayout:1.1.3"
 
     implementation "org.greenrobot:eventbus:$eventbusVersion"
 
@@ -70,23 +69,15 @@ dependencies {
     implementation project(':cordova-plugin-misnap:misnapcontroller')
 
     // Add dependency for barcode scanning
-    implementation (project(':cordova-plugin-misnap:barcode-release'))
-    implementation project(':cordova-plugin-misnap:barcodecontroller')
+    //implementation (project(':cordova-plugin-misnap:barcode-release'))
+    //implementation project(':cordova-plugin-misnap:barcodecontroller')
 
     // Add dependency for credit card scanning
     //implementation (project(':cardio-release'))
     //implementation project(':creditcardcontroller')
 
     // Add dependencies for Unit Testing
-    androidTestImplementation "com.linkedin.dexmaker:dexmaker-mockito:$dexmakerVersion"
 
     // Add dependencies for automated Black-box testing with Robotium
-    androidTestImplementation "com.jayway.android.robotium:robotium-solo:$robotiumVersion"
-    androidTestImplementation "com.android.support.test:runner:$supportTestVersion"
-    androidTestImplementation "com.android.support.test:rules:$supportTestVersion"
 
-    testImplementation "org.mockito:mockito-core:$mockitoVersion"
-    testImplementation "org.robolectric:robolectric:$robolectricVersion"
-    testImplementation "junit:junit:$junitVersion"
-    testImplementation "com.squareup.assertj:assertj-android:$androidAssertJVersion"
 }

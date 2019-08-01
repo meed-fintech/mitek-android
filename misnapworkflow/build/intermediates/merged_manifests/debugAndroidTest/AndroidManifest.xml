@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.miteksystems.misnap.misnapworkflow.test" >
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="28" />
+
+    <instrumentation
+        android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:functionalTest="false"
+        android:handleProfiling="false"
+        android:label="Tests for com.miteksystems.misnap.misnapworkflow.test"
+        android:targetPackage="com.miteksystems.misnap.misnapworkflow.test" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+        android:debuggable="true"
+        android:largeHeap="true" >
+        <uses-library android:name="android.test.runner" />
+
+        <activity
+            android:name="com.miteksystems.misnap.misnapworkflow.MiSnapWorkflowActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|locale"
+            android:hardwareAccelerated="true"
+            android:launchMode="standard"
+            android:process=":MiSnap"
+            android:theme="@style/MiSnapWorkflowTheme" />
+        <activity
+            android:name="pub.devrel.easypermissions.AppSettingsDialogHolderActivity"
+            android:exported="false"
+            android:label=""
+            android:theme="@style/EasyPermissions.Transparent" /> <!-- Declare the MiSnap credit card capture activity -->
+        <activity
+            android:name="com.miteksystems.misnap.cardio.CardIoWrapperActivity"
+            android:configChanges="keyboardHidden|orientation"
+            android:hardwareAccelerated="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="landscape" >
+        </activity>
+    </application>
+
+</manifest>

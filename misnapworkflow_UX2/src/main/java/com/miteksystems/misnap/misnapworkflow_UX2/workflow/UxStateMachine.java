@@ -6,18 +6,21 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Handler;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
+import androidx.annotation.VisibleForTesting;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.miteksystems.misnap.analyzer.MiSnapAnalyzerResult;
-import com.miteksystems.misnap.barcode.BarcodeFragment;
-import com.miteksystems.misnap.barcode.events.OnCapturedBarcodeEvent;
+//import com.miteksystems.misnap.barcode.BarcodeFragment;
+//import com.miteksystems.misnap.barcode.events.OnCapturedBarcodeEvent;
 import com.miteksystems.misnap.events.CaptureCurrentFrameEvent;
 import com.miteksystems.misnap.events.OnCaptureModeChangedEvent;
 import com.miteksystems.misnap.events.OnCapturedFrameEvent;
@@ -34,18 +37,19 @@ import com.miteksystems.misnap.misnapworkflow_UX2.device.MiSnapBenchMark;
 import com.miteksystems.misnap.misnapworkflow_UX2.params.UxpConstants;
 import com.miteksystems.misnap.misnapworkflow_UX2.params.WorkflowApi;
 import com.miteksystems.misnap.misnapworkflow_UX2.params.WorkflowConstants;
-import com.miteksystems.misnap.misnapworkflow_UX2.params.WorkflowParameterReader;
+import com.miteksystems.misnap.misnapworkflow_UX2.params.WorkflowParamManager;
 import com.miteksystems.misnap.misnapworkflow_UX2.storage.MiSnapPreferencesManager;
 import com.miteksystems.misnap.misnapworkflow_UX2.storage.SessionDiagnostics;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.FragmentLoader;
-import com.miteksystems.misnap.misnapworkflow_UX2.ui.overlay.BarcodeOverlayFragment;
+//import com.miteksystems.misnap.misnapworkflow_UX2.ui.overlay.BarcodeOverlayFragment;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.overlay.YourCameraOverlayFragment;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.screen.FTManualTutorialFragment;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.screen.FTVideoTutorialFragment;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.screen.ManualHelpFragment;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.screen.VideoDetailedFailoverFragment;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.screen.VideoHelpFragment;
-import com.miteksystems.misnap.params.BarcodeApi;
+//import com.miteksystems.misnap.params.BarcodeApi;
+import com.miteksystems.misnap.params.BaseParamMgr;
 import com.miteksystems.misnap.params.CameraApi;
 import com.miteksystems.misnap.params.CameraParamMgr;
 import com.miteksystems.misnap.params.DocType;
@@ -56,11 +60,13 @@ import com.miteksystems.misnapcontroller.MiSnapFragment;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Locale;
 
 
 /**
@@ -93,12 +99,6 @@ public class UxStateMachine {
     /**
      * Customize the standard MiSnap workflow.
      */
-    // Replaces MiSnapInitialTimeout
-    private static final int INITIAL_VIDEO_TIMEOUT_MS = 20 * SEC_TO_MS; // 20 seconds
-    // Replaces MiSnapTimeout - only used if MAX_TIMEOUTS_BEFORE_FAILOVER is greater than 0
-    private static final int VIDEO_TIMEOUT_MS = 30 * SEC_TO_MS; // 30 seconds
-    // Replaces MiSnapMaxTimeouts
-    private static final int MAX_TIMEOUTS_BEFORE_FAILOVER = 0; // No auto-capture retries
     // Replaces MiSnapAutoCaptureFailoverToStillCapture
     private static final int AUTO_CAPTURE_FAILOVER_TO_STILL_CAPTURE = 1; // yes, failover to manual
     // How long to wait for bug animation to finish
@@ -107,10 +107,6 @@ public class UxStateMachine {
     /**
      * Experimental workflow features.
      */
-    // If true, if auto-capture fails MAX_TIMEOUTS_BEFORE_FAILOVER times, restart immediately in manual capture mode.
-    private static final boolean SKIP_FAILOVER_SCREEN = false;
-    // If true, and SKIP_FAILOVER_SCREEN is true, then seamlessly restart in manual capture mode.
-    private static final boolean SEAMLESS_FAILOVER = true;
     // MiSnap will loop, capturing a set number of images. Normally this is 1.
     private static final int NUM_IMAGES_TO_CAPTURE = 1;
 
@@ -122,6 +118,7 @@ public class UxStateMachine {
     private Context mAppContext;
     private Intent mMiSnapIntent;
     private JSONObject mParams;
+    private WorkflowParamManager mWorkflowParamMgr;
     private CameraParamMgr mCameraParamMgr;
     private int mStartingCaptureModeForMultipleImageCapture;
     private Handler mHandler;
@@ -143,16 +140,20 @@ public class UxStateMachine {
         mMiSnapIntent = miWorkflowActivity.getIntent();
         mMiWorkflowActivity = new WeakReference<>(miWorkflowActivity);
         //Please do not remove or uncomment following UXP statements
-        MibiData.getInstance().resetUXP(); //this will start the time for the UXP events
+        MibiData.getInstance().resetMibi(); //this will start the time for the UXP events and reset any existing mibi fields
+        BaseParamMgr.resetChangedValues();
 
         try {
             if (!MiSnapIntentCheck.isDangerous(mMiSnapIntent)) {
                 String jobSettings = mMiSnapIntent.getStringExtra(MiSnapApi.JOB_SETTINGS);
                 mParams = new JSONObject(jobSettings);
+                mWorkflowParamMgr = new WorkflowParamManager(mParams);
                 mCameraParamMgr = new CameraParamMgr(mParams);
-                mDocType = new DocType(mCameraParamMgr.getRawDocumentType());
+                mDocType = new DocType(mWorkflowParamMgr.getRawDocumentType());
                 mStartingCaptureModeForMultipleImageCapture = mCameraParamMgr.getCaptureMode();
                 mSessionDiagnostics = new SessionDiagnostics(mDocType);
+
+                setLocale();
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -213,13 +214,14 @@ public class UxStateMachine {
      * This is the heart of the state machine.
      * @param nextState: ID of the next state to transition to
      */
-    private void nextMiSnapState(int nextState) {
+    @VisibleForTesting
+    public void nextMiSnapState(int nextState) {
         Log.d(TAG, "State changed from " + mCurrentState + " to " + nextState);
         mCurrentState = nextState;
         switch (nextState) {
             case UX_REQUEST_PERMISSIONS:
                 // The Card.io library handles permissions itself.
-                if (mCameraParamMgr.isCreditCard()) {
+                if (mDocType.isCreditCard()) {
                     nextMiSnapState(UX_INITIALIZING);
                     return;
                 }
@@ -253,7 +255,7 @@ public class UxStateMachine {
 
             case UX_INITIALIZING:
                 // For credit card and PDF417 barcodes, don't show a tutorial screen.
-                if (mCameraParamMgr.isCreditCard()) {
+                if (mDocType.isCreditCard()) {
                     nextMiSnapState(UX_START_CREDIT_CARD_CAPTURE);
                 } else {
                     if (!MiSnapBenchMark.isCameraSufficientForAutoCapture(mAppContext)) {
@@ -268,7 +270,7 @@ public class UxStateMachine {
                     } else if (!mCameraParamMgr.isCurrentModeVideo()
                             && MiSnapPreferencesManager.isFirstTimeUserManual(mAppContext, mDocType)) {
                         nextMiSnapState(UX_FIRST_TIME_MANUAL_TUTORIAL);
-                    } else if(mCameraParamMgr.isBarcode()){
+                    } else if(mDocType.isBarcode()){
                         nextMiSnapState(UX_START_BARCODE_CAPTURE);
                     } else {
                         nextMiSnapState(UX_START_MISNAP_CAPTURE);
@@ -277,15 +279,15 @@ public class UxStateMachine {
                 break;
 
             case UX_FIRST_TIME_VIDEO_TUTORIAL:
-                FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(), FTVideoTutorialFragment.newInstance(mDocType, mCameraParamMgr.getRequestedOrientation()));
-                if (!(mCameraParamMgr.isIdDocument() || mCameraParamMgr.isBarcode())) {
+                FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(), FTVideoTutorialFragment.newInstance(mDocType, mWorkflowParamMgr.getRequestedOrientation()));
+                if (!(mDocType.isIdDocument() || mDocType.isBarcode())) {
                     MiSnapPreferencesManager.setIsFirstTimeUser(mAppContext, false, mDocType);
                 }
                 break;
 
             case UX_FIRST_TIME_MANUAL_TUTORIAL:
-                FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(), FTManualTutorialFragment.newInstance(mDocType, mCameraParamMgr.getRequestedOrientation()));
-                if (!(mCameraParamMgr.isIdDocument() || mCameraParamMgr.isBarcode())) {
+                FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(), FTManualTutorialFragment.newInstance(mDocType, mWorkflowParamMgr.getRequestedOrientation()));
+                if (!(mDocType.isIdDocument() || mDocType.isBarcode())) {
                     MiSnapPreferencesManager.setIsFirstTimeUserManual(mAppContext, false, mDocType);
                 }
                 break;
@@ -302,7 +304,7 @@ public class UxStateMachine {
 
                 // In video mode, fail over to manual mode after X seconds
                 if (mCameraParamMgr.isCurrentModeVideo()) {
-                    final int timeoutMs = mNumTimeouts == 0 ? INITIAL_VIDEO_TIMEOUT_MS : VIDEO_TIMEOUT_MS;
+                    final int timeoutMs = mNumTimeouts == 0 ? mWorkflowParamMgr.getInitialTimeOut() : mWorkflowParamMgr.getSubsequentTimeOut();
                     mVideoTimeoutRunnable = new VideoTimeoutRunnable();
                     mHandler.postDelayed(mVideoTimeoutRunnable, timeoutMs);
                 }
@@ -321,36 +323,39 @@ public class UxStateMachine {
                 break;
 
             case UX_VIDEO_TIMEOUT:
-                if (++mNumTimeouts <= MAX_TIMEOUTS_BEFORE_FAILOVER) {
+                if (++mNumTimeouts <= mWorkflowParamMgr.getMaxTimeouts()) {
                     // Let the user try to auto-capture again
                     EventBus.getDefault().post(new ShutdownEvent(ShutdownEvent.TIMEOUT)); // Send STOP event to MiSnap
                     FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(), VideoHelpFragment.newInstance(mDocType));
                 } else {
+                    mHandler.removeCallbacks(mVideoTimeoutRunnable);
                     if (AUTO_CAPTURE_FAILOVER_TO_STILL_CAPTURE == 1) {
                         // Failover to manual capture mode
-                        if (SKIP_FAILOVER_SCREEN) {
-                            // Go straight to manual capture mode...
-                            if (SEAMLESS_FAILOVER) {
-                                // ...seamlessly
+                        switch (mWorkflowParamMgr.getFailoverType()) {
+                            case WorkflowApi.SEAMLESS_FAILOVER:
+                                // Go straight to manual capture mode seamlessly
                                 // When MiSnap is done entering manual capture mode, this state machine will receive
                                 // an Event called OnCaptureModeChangedEvent.
                                 EventBus.getDefault().post(new SetCaptureModeEvent(CameraApi.PARAMETER_CAPTURE_MODE_MANUAL));
-                            } else {
-                                // ...quickly restart MiSnap in between
+                                break;
+                            case WorkflowApi.SKIP_FAILOVER_SCREEN:
+                                // Go straight to manual capture mode quickly restart MiSnap in between
                                 EventBus.getDefault().post(new ShutdownEvent(ShutdownEvent.FAILOVER)); // Send STOP event to MiSnap
                                 useManualCaptureModeNextTime();
-                                nextMiSnapState(UX_INITIALIZING);
-                            }
-                        } else {
-                            // Give the user control with manual capture mode.
-                            EventBus.getDefault().post(new ShutdownEvent(ShutdownEvent.FAILOVER)); // Send STOP event to MiSnap
-                            useManualCaptureModeNextTime();
-                            // Show the Failover screen so they know what is happening.
-                            FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(),
-                                    VideoDetailedFailoverFragment.newInstance(mDocType, ENABLE_SESSION_DIAGNOSTICS ? mSessionDiagnostics.rankFailures() : new ArrayList<String>()));
-                            mSessionDiagnostics.reset();
+                                nextMiSnapState(UX_START_MISNAP_CAPTURE);
+                                break;
+                            case WorkflowApi.USE_FAILOVER_SCREEN:
+                            default:
+                                // Give the user control with manual capture mode.
+                                EventBus.getDefault().post(new ShutdownEvent(ShutdownEvent.FAILOVER)); // Send STOP event to MiSnap
+                                useManualCaptureModeNextTime();
+                                // Show the Failover screen so they know what is happening.
+                                FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(),
+                                        VideoDetailedFailoverFragment.newInstance(mDocType, ENABLE_SESSION_DIAGNOSTICS ? mSessionDiagnostics.rankFailures() : new ArrayList<String>()));
+                                mSessionDiagnostics.reset();
 
-                            //FragmentLoader.showScreen(mMiWorkflowActivity.get(), VideoHelpFragment.class);
+                                //FragmentLoader.showScreen(mMiWorkflowActivity.get(), VideoHelpFragment.class);
+                                break;
                         }
                     } else {
                         // If the workflow doesn't want to failover to manual
@@ -360,7 +365,7 @@ public class UxStateMachine {
                 break;
 
             case UX_START_BARCODE_CAPTURE:
-                FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(), new BarcodeFragment());
+                //FragmentLoader.showScreen(R.id.misnapWorkflowFragmentContainer, "", mMiWorkflowActivity.get().getSupportFragmentManager(), new BarcodeFragment());
                 break;
 
             case UX_START_CREDIT_CARD_CAPTURE:
@@ -401,7 +406,7 @@ public class UxStateMachine {
 
     // After FTVideoTutorialFragment
     public void onFirstTimeVideoTutorialFragmentDone() {
-        if (mCameraParamMgr.isBarcode()) {
+        if (mDocType.isBarcode()) {
             nextMiSnapState(UX_START_BARCODE_CAPTURE);
         } else {
             nextMiSnapState(UX_START_MISNAP_CAPTURE);
@@ -410,7 +415,7 @@ public class UxStateMachine {
 
     // After FTManualTutorialFragment
     public void onFirstTimeManualTutorialFragmentDone() {
-        if (mCameraParamMgr.isBarcode()) {
+        if (mDocType.isBarcode()) {
             nextMiSnapState(UX_START_BARCODE_CAPTURE);
         } else {
             nextMiSnapState(UX_START_MISNAP_CAPTURE);
@@ -498,14 +503,14 @@ public class UxStateMachine {
         if (mCameraParamMgr.getCaptureMode() != event.captureMode) {
             setCaptureModeNextTime(event.captureMode);
             // TODO: It would be nice to provide a method to query if MiSnap supports video capture mode on this device BEFORE starting MiSnap.
-            if(!mCameraParamMgr.isBarcode()){
+            if(!mDocType.isBarcode()){
                 Toast.makeText(mAppContext, mAppContext.getResources().getText(R.string.misnap_auto_capture_not_supported_ux2), Toast.LENGTH_LONG)
                         .show();
             }
         }
 
         if (mCurrentState == UX_START_BARCODE_CAPTURE) {
-            FragmentLoader.showOverlay(R.id.misnapWorkflowFragmentContainer, MISNAP_OVERLAY_TAG, mMiWorkflowActivity.get().getSupportFragmentManager(), new BarcodeOverlayFragment());
+            //FragmentLoader.showOverlay(R.id.misnapWorkflowFragmentContainer, MISNAP_OVERLAY_TAG, mMiWorkflowActivity.get().getSupportFragmentManager(), new BarcodeOverlayFragment());
         } else {
             nextMiSnapState(UX_MISNAP_IS_ACTIVE);
         }
@@ -541,15 +546,15 @@ public class UxStateMachine {
     @Subscribe
     public void onEvent(OnCapturedFrameEvent event) {
         Log.d(TAG, "OnCapturedFrame");
-        if (mCurrentState != UX_MISNAP_IS_ACTIVE && !mCameraParamMgr.isBarcode()) {
+        if (mCurrentState != UX_MISNAP_IS_ACTIVE && !mDocType.isBarcode()) {
             Log.d(TAG, "Frame arrived too late, and we're already on a new screen. Ignore it.");
             return;
         }
 
         mHasCapturedAFrame = true;
         //if returning a barcode image, add in barcode data and change result code
-        if(mCameraParamMgr.isBarcode()){
-            event.returnIntent.putExtra(BarcodeApi.RESULT_PDF417_DATA, barcodeResult);
+        if(mDocType.isBarcode()){
+            //event.returnIntent.putExtra(BarcodeApi.RESULT_PDF417_DATA, barcodeResult);
             event.returnIntent.putExtra(MiSnapApi.RESULT_CODE, MiSnapApi.RESULT_SUCCESS_PDF417);
         }
         // Add any workflow parameter usage to the MIBI data for now
@@ -558,7 +563,7 @@ public class UxStateMachine {
         mMiWorkflowActivity.get().setResult(Activity.RESULT_OK, event.returnIntent);
 
         //no snap animation for barcode, just return
-        if(mCameraParamMgr.isBarcode()){
+        if(mDocType.isBarcode()){
             nextMiSnapState(UX_FINISH_MISNAP_WORKFLOW);
         }else{
             // Let the bug animation play for a bit
@@ -571,11 +576,11 @@ public class UxStateMachine {
         try {
             String jobSettings = mMiSnapIntent.getStringExtra(MiSnapApi.JOB_SETTINGS);
             JSONObject params = new JSONObject(jobSettings);
-            WorkflowParameterReader reader = new WorkflowParameterReader(params);
-            int glareTracking = reader.getGlareTracking();
+            WorkflowParamManager reader = new WorkflowParamManager(params);
 
             MibiData mibiData = MibiData.getInstance();
-            mibiData.addWorkflowParameter(WorkflowApi.MISNAP_WORKFLOW_TRACK_GLARE, String.valueOf(glareTracking));
+            mibiData.addWorkflowParameter(WorkflowApi.MiSnapTrackGlare, String.valueOf(reader.useGlareTracking()));
+            mibiData.addWorkflowParameter(WorkflowApi.MiSnapFailoverType, String.valueOf(reader.getFailoverType()));
 
             Intent intent = event.returnIntent;
             intent.putExtra(MiSnapApi.RESULT_MIBI_DATA, mibiData.getMibiData());
@@ -586,6 +591,7 @@ public class UxStateMachine {
     }
 
     // Received when the barcode has been read
+    /*
     @Subscribe
     public void onEvent(OnCapturedBarcodeEvent event) {
         Log.d(TAG, "OnCapturedBarcodeEvent");
@@ -596,7 +602,7 @@ public class UxStateMachine {
 
         //nextMiSnapState(UX_FINISH_MISNAP_WORKFLOW);
     }
-
+    */
     // Received when MiSnap has turned on or turned off the torch
     @Subscribe
     public void onEvent(OnTorchStateEvent event){
@@ -617,7 +623,7 @@ public class UxStateMachine {
     }
 
     // Received when MiSnap has changed the capture mode on-the-fly
-    @Subscribe
+    @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(OnCaptureModeChangedEvent event) {
         Log.d(TAG, "OnCaptureModeChanged");
 
@@ -657,6 +663,27 @@ public class UxStateMachine {
         public void run() {
             Log.d(TAG, "Bug animation finished");
             EventBus.getDefault().post(new ShutdownEvent(ShutdownEvent.CAPTURED)); // Send STOP event to MiSnap
+        }
+    }
+
+    public void onRotate() {
+        setLocale();
+    }
+
+    private void setLocale() {
+        String locale = mWorkflowParamMgr.optLocaleOverride();
+
+        if (!locale.isEmpty()) {
+            Locale overrideLocale = new Locale(locale);
+            Locale.setDefault(overrideLocale);
+
+            Configuration config = mAppContext.getResources().getConfiguration();
+            config.locale = overrideLocale;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                config.setLayoutDirection(overrideLocale);
+            }
+
+            mAppContext.getResources().updateConfiguration(config, mAppContext.getResources().getDisplayMetrics());
         }
     }
 

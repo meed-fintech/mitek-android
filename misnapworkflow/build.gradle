@@ -1,0 +1,83 @@
+apply plugin: 'com.android.library'
+
+
+android {
+    compileSdkVersion project.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion project.coreMinSdk
+        targetSdkVersion project.targetSdkVersion
+
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            all {
+                jvmArgs '-noverify'
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+            minifyEnabled false
+            shrinkResources false
+            testCoverageEnabled true
+        }
+
+        release {
+            signingConfig signingConfigs.debug
+            debuggable false
+            jniDebuggable false
+            minifyEnabled true
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "androidx.appcompat:appcompat:1.0.0"
+    implementation "androidx.percentlayout:percentlayout:1.0.0"
+    implementation "androidx.constraintlayout:constraintlayout:1.1.3"
+
+    implementation "org.greenrobot:eventbus:$eventbusVersion"
+
+    // Add dependency for MiSnap external API
+    implementation (project(':cordova-plugin-misnap:api-release'))
+
+    implementation (project(':cordova-plugin-misnap:misnapcamera-release'))
+
+    implementation (project(':cordova-plugin-misnap:misnapscience-release'))
+
+    // Add dependency for MiSnap external MibiData
+    implementation (project(':cordova-plugin-misnap:mibidata-release'))
+
+    // Add dependency for rotating bitmap
+    implementation (project(':cordova-plugin-misnap:imageutils-release'))
+
+    // Add dependency for MiSnap
+    implementation project(':cordova-plugin-misnap:misnapcontroller')
+
+    // Add dependency for barcode scanning
+    //implementation (project(':cordova-plugin-misnap:barcode-release'))
+    //implementation project(':cordova-plugin-misnap:barcodecontroller')
+
+    // Add dependency for credit card scanning
+    //implementation (project(':cardio-release'))
+    //implementation project(':creditcardcontroller')
+
+    // Add dependencies for Unit Testing
+
+    // Add dependencies for automated Black-box testing with Robotium
+
+}

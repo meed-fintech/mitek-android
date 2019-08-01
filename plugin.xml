@@ -23,7 +23,5 @@
 		<framework src="imageutils-release" custom="true" />
 		<framework src="misnapcontroller" custom="true" />
 		<framework src="sanselan-release" custom="true" />
-		<framework src="barcode-release" custom="true" />
-		<framework src="barcodecontroller" custom="true" />
 	</platform>
 </plugin>

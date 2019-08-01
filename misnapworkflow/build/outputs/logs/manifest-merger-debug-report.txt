@@ -1,0 +1,41 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:2:1-15:12
+INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:2:1-15:12
+INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:2:1-15:12
+	package
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:3:5-53
+		INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:2:11-69
+application
+ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:5:5-13:19
+activity#com.miteksystems.misnap.misnapworkflow.MiSnapWorkflowActivity
+ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:6:9-12:58
+	android:process
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:11:13-38
+	android:launchMode
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:9:13-42
+	android:hardwareAccelerated
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:10:13-47
+	android:configChanges
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:8:13-81
+	android:theme
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:12:13-55
+	android:name
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml:7:13-51
+uses-sdk
+INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+		ADDED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnguyen/Desktop/MiSnap_4.1.1/Sample_Application/misnapworkflow/src/main/AndroidManifest.xml

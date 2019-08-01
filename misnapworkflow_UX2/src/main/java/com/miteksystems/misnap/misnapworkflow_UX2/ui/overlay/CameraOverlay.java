@@ -16,8 +16,9 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.SensorManager;
 import android.os.Handler;
-import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+import androidx.core.content.ContextCompat;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.AttributeSet;
@@ -49,7 +50,7 @@ import com.miteksystems.misnap.mibidata.MibiData;
 import com.miteksystems.misnap.misnapworkflow_UX2.R;
 import com.miteksystems.misnap.misnapworkflow_UX2.params.UxpConstants;
 import com.miteksystems.misnap.misnapworkflow_UX2.params.WorkflowConstants;
-import com.miteksystems.misnap.misnapworkflow_UX2.params.WorkflowParameterReader;
+import com.miteksystems.misnap.misnapworkflow_UX2.params.WorkflowParamManager;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.AutoResizeTextView;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.animation.FrameSequenceAnimation;
 import com.miteksystems.misnap.misnapworkflow_UX2.ui.animation.MiSnapAnimation;
@@ -75,16 +76,8 @@ public class CameraOverlay extends RelativeLayout {
     private static final boolean ALWAYS_SHOW_MANUAL_CAPTURE_BUTTON = false;
     // Replaces MiSnapAnimatedBug - If true, animate the bug
     private static final boolean ANIMATED_BUG = true;
-    // Replaces MiSnapAnimationRectangleStrokeWidth
-    private static final int ANIMATION_STROKE_WIDTH = 20;
-    // Replaces MiSnapAnimationRectangleCornerRadius
-    private static final int ANIMATION_CORNER_RADIUS = 16;
-    // Replaces MiSnapAnimationRectangleColor
-    private static final int ANIMATION_COLOR = 0xED1C24; // NOTE: Transparency will be removed.
     // Replaces MiSnapSmartHintEnabled
     private static boolean SMART_HINT_ENABLED = false;
-    // Replaces MiSnapSmartHintUpdatePeriod
-    private static final int SMART_HINT_UPDATE_PERIOD = 1000;
     // Replaces MiSnapCameraVignetteImageEnabled
     private static final boolean VIGNETTE_IMAGE_ENABLED = false;
     // Replaces MiSnapCameraGuideImageEnabled, which was mis-named and actually refers to the Ghost image
@@ -96,8 +89,6 @@ public class CameraOverlay extends RelativeLayout {
     private boolean DRAW_REALTIME_GLARE_OUTLINE;
     private static final boolean DRAW_REALTIME_DOC_OUTLINE = false;
     List<Point> debugOutlineCorners = new ArrayList();
-    private static final int SMART_HINT_INITIAL_DELAY_MS = 3000;
-	Context mActivityContext;
     Context mAppContext;
 	ImageButton mHelpButton, mCaptureButton, mCancelButton;
     Button mFlashToggle;
@@ -114,7 +105,7 @@ public class CameraOverlay extends RelativeLayout {
 
     CameraParamMgr mCameraParamMgr;
     ScienceParamMgr mScienceParamMgr;
-    WorkflowParameterReader mWorkflowParamMgr;
+    WorkflowParamManager mWorkflowParamMgr;
     Bitmap mGhostBitmap;
     Bitmap mSnappedDoc;
 	Animation mAnimationFadeOut, mAnimationFadeIn, mDocAnimation;
@@ -176,16 +167,15 @@ public class CameraOverlay extends RelativeLayout {
 
     public CameraOverlay(Context context, AttributeSet attrs, int defStyle, JSONObject params, OnClickListener onClickListener) {
         super(context, attrs, defStyle);
-        mActivityContext = context;
         mAppContext = context.getApplicationContext();
         mCameraParamMgr = new CameraParamMgr(params);
         mScienceParamMgr = new ScienceParamMgr(params);
-        mWorkflowParamMgr = new WorkflowParameterReader(params);
+        mWorkflowParamMgr = new WorkflowParamManager(params);
         loadWorkflowParameters();
         mOnClickListener = onClickListener;
         mFrameCapturedIgnoreUXP = false;
 
-        mDocType = new DocType(mCameraParamMgr.getRawDocumentType());
+        mDocType = new DocType(mWorkflowParamMgr.getRawDocumentType());
         View.inflate(context, R.layout.misnap_your_camera_overlay_ux2, this);
         setupButtons();
         setupPaintObj();
@@ -198,7 +188,7 @@ public class CameraOverlay extends RelativeLayout {
     }
 
     private void loadWorkflowParameters() {
-        DRAW_REALTIME_GLARE_OUTLINE = mWorkflowParamMgr.getGlareTracking() != 0;
+        DRAW_REALTIME_GLARE_OUTLINE = mWorkflowParamMgr.useGlareTracking();
     }
 
     private void setupPaintObj() {
@@ -208,11 +198,10 @@ public class CameraOverlay extends RelativeLayout {
         mDetectedRectanglePaint.setStyle(Paint.Style.STROKE);
         mDetectedRectanglePaint.setStrokeJoin(Paint.Join.ROUND);
         mDetectedRectanglePaint.setStrokeCap(Paint.Cap.ROUND);
-        mDetectedRectanglePaint.setPathEffect(new CornerPathEffect(ANIMATION_CORNER_RADIUS));
+        mDetectedRectanglePaint.setPathEffect(new CornerPathEffect(mWorkflowParamMgr.getAnimationRectangleCornerRadius()));
         mDetectedRectanglePaint.setAntiAlias(true);
-        mDetectedRectanglePaint.setStrokeWidth(ANIMATION_STROKE_WIDTH);
-        int tempColor = ANIMATION_COLOR | 0xFF000000; //No transparency
-        mDetectedRectanglePaint.setColor(tempColor);
+        mDetectedRectanglePaint.setStrokeWidth(mWorkflowParamMgr.getAnimationRectangleStrokeWidth());
+        mDetectedRectanglePaint.setColor(mWorkflowParamMgr.getAnimationRectangleColor());
         //set the path obj
         mDetectedRectanglePath = new Path();
     }
@@ -229,7 +218,7 @@ public class CameraOverlay extends RelativeLayout {
         mHintBubbles.add(new HintBubble(MiSnapAnalyzerResult.FrameChecks.MIN_PADDING, R.string.misnap_too_close_generic_ux2));
         mHintBubbles.add(new HintBubble(MiSnapAnalyzerResult.FrameChecks.MAX_BRIGHTNESS, R.string.misnap_less_light_ux2));
         mHintBubbles.add(new HintBubble(MiSnapAnalyzerResult.FrameChecks.MIN_BRIGHTNESS, R.string.misnap_more_light_ux2));
-        int wrongDocSpeechId = mCameraParamMgr.isCheck() ? (mCameraParamMgr.isCheckBack() ? R.string.misnap_wrong_doc_check_back_expected_ux2 : R.string.misnap_wrong_doc_check_front_expected_ux2) : R.string.misnap_wrong_doc_generic_ux2;
+        int wrongDocSpeechId = mDocType.isCheck() ? (mDocType.isCheckBack() ? R.string.misnap_wrong_doc_check_back_expected_ux2 : R.string.misnap_wrong_doc_check_front_expected_ux2) : R.string.misnap_wrong_doc_generic_ux2;
         mHintBubbles.add(new HintBubble(MiSnapAnalyzerResult.FrameChecks.WRONG_DOCUMENT, wrongDocSpeechId));
         mHintBubbles.add(new HintBubble(MiSnapAnalyzerResult.FrameChecks.SHARPNESS, R.string.misnap_hold_steady_ux2));
         mHintBubbles.add(new HintBubble(MiSnapAnalyzerResult.FrameChecks.FOUR_CORNER_CONFIDENCE, 0));
@@ -250,7 +239,11 @@ public class CameraOverlay extends RelativeLayout {
 		mFlashToggle = (Button) findViewById(R.id.overlay_flash_toggle);
 		try {
 			if(mFlashToggle != null) {
-				mFlashToggle.setVisibility(View.VISIBLE);
+			    if(mDocType.isIdDocument()) {
+			        mFlashToggle.setVisibility(View.INVISIBLE);
+                } else {
+                    mFlashToggle.setVisibility(View.VISIBLE);
+                }
                 mFlashToggle.setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.misnap_icon_flash_off_ux2), null, null, null);
                 mFlashToggle.setText(getResources().getText(R.string.flash_off_ux2));
                 mFlashToggle.setTextColor(getResources().getColor(R.color.misnap_flash_off_gray_ux2));
@@ -309,12 +302,12 @@ public class CameraOverlay extends RelativeLayout {
 
     private void onOrientationChange(int angle) {
 
-        if(mActivityContext == null || mAppContext==null || mFrameCapturedIgnoreUXP) {
+        if(mAppContext==null || mFrameCapturedIgnoreUXP) {
             return;
         }
 
         // Check if an orientation switch occurred (i.e. the user rotated the device)
-        int rotation = Utils.getDeviceOrientation(mActivityContext);
+        int rotation = Utils.getDeviceOrientation(mAppContext);
         if (rotation != mCurrentRotation) {
             Log.i(TAG, "Rotate from " + mCurrentRotation + " to " + rotation);
             mCurrentRotation = rotation;
@@ -355,9 +348,9 @@ public class CameraOverlay extends RelativeLayout {
 //        instructionText.setText(overlayText);
         instructionText.setContentDescription(overlayText);
 
-        if (mCameraParamMgr.isCheckFront()) {
+        if (mDocType.isCheckFront()) {
             instructionText.setImageResource(R.drawable.misnap_en_android_check_heading_front_ux2);
-        } else if(mCameraParamMgr.isCheckBack()){
+        } else if(mDocType.isCheckBack()){
             instructionText.setImageResource(R.drawable.misnap_en_android_check_heading_back_ux2);
         } else {
             instructionText.setImageResource(android.R.color.transparent);
@@ -367,7 +360,7 @@ public class CameraOverlay extends RelativeLayout {
 
         // For ID documents, based on user testing, we hide the top and bottom gray bars.
         // TODO KW 2017-09-26:  why are these bars needed at all ever?
-        if (mCameraParamMgr.isPassport() || mCameraParamMgr.isLicense() || mCameraParamMgr.isIdCardFront() || mCameraParamMgr.isIdCardBack()) {
+        if (mDocType.isIdDocument()) {
             // For ID documents, based on user testing, we hide the top and bottom gray bars.
             LinearLayout topBar = (LinearLayout) findViewById(R.id.misnap_topbar);
             LinearLayout bottomBar = (LinearLayout) findViewById(R.id.misnap_bottombar);
@@ -400,16 +393,16 @@ public class CameraOverlay extends RelativeLayout {
             public void run() {
                 SMART_HINT_ENABLED = true;
             }
-        }, SMART_HINT_INITIAL_DELAY_MS);
+        }, mWorkflowParamMgr.getSmartHintInitialDelay());
 
         setUpManualCapturePleaseWaitDialog();
     }
 
     private void setUpManualCapturePleaseWaitDialog() {
-        mManualCapturePleaseWaitDialog = new ProgressDialog(mActivityContext, R.style.MiSnapProgressDialog);
+        mManualCapturePleaseWaitDialog = new ProgressDialog(getContext(), R.style.MiSnapProgressDialog);
         mManualCapturePleaseWaitDialog.setMessage(mAppContext.getString(R.string.misnap_manual_capture_please_wait_ux2));
         mManualCapturePleaseWaitDialog.setCancelable(false);
-        mManualCapturePleaseWaitDialog.setIndeterminateDrawable(ContextCompat.getDrawable(mActivityContext, R.drawable.misnap_icon));
+        mManualCapturePleaseWaitDialog.setIndeterminateDrawable(ContextCompat.getDrawable(mAppContext, R.drawable.misnap_icon));
         Window window = mManualCapturePleaseWaitDialog.getWindow();
         if (null != window) {
             WindowManager.LayoutParams layoutParams = window.getAttributes();
@@ -466,7 +459,7 @@ public class CameraOverlay extends RelativeLayout {
     }
 
     private int getVignetteResourceID(String specificVignetteName) {
-        return mActivityContext.getResources().getIdentifier(specificVignetteName,
+        return mAppContext.getResources().getIdentifier(specificVignetteName,
                 "drawable",
                 getContext().getPackageName());
     }
@@ -487,7 +480,7 @@ public class CameraOverlay extends RelativeLayout {
 			if(lGhostImageId > 0) {
 				//we need to show the guide image
                 try {
-                    Bitmap lScaledGhostImage = BitmapFactory.decodeResource(mActivityContext.getResources(), lGhostImageId);
+                    Bitmap lScaledGhostImage = BitmapFactory.decodeResource(mAppContext.getResources(), lGhostImageId);
                     if(lScaledGhostImage != null) {
                         mGhostBitmap = scaleWithAspectRatio(lScaledGhostImage);
                         if(mGhostBitmap != null) {
@@ -536,21 +529,21 @@ public class CameraOverlay extends RelativeLayout {
                     }
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
-                    mGhostImage.setImageDrawable(mActivityContext.getResources().getDrawable(lGhostImageId));
+                    mGhostImage.setImageDrawable(mAppContext.getResources().getDrawable(lGhostImageId));
                 }
                 //add the animation effects to it
-				mAnimationFadeOut = AnimationUtils.loadAnimation(mActivityContext, R.anim.misnap_fadeout);
-				mAnimationFadeIn = AnimationUtils.loadAnimation(mActivityContext, R.anim.misnap_fadein);
-                mDocAnimation = AnimationUtils.loadAnimation(mActivityContext, R.anim.misnap_balloon_animation);
+				mAnimationFadeOut = AnimationUtils.loadAnimation(mAppContext, R.anim.misnap_fadeout);
+				mAnimationFadeIn = AnimationUtils.loadAnimation(mAppContext, R.anim.misnap_fadein);
+                mDocAnimation = AnimationUtils.loadAnimation(mAppContext, R.anim.misnap_balloon_animation);
 			}
             if (mGhostText != null){
                 mGhostText.setVisibility(View.INVISIBLE); //this call is must otherwise animation won't work as the view had never been rendered
                 //set content description for talk back
-                Spanned lGhostImageTxt = Html.fromHtml(mActivityContext.getResources().getString(getGhostImageAccessibilityTextId()));
+                Spanned lGhostImageTxt = Html.fromHtml(mAppContext.getResources().getString(getGhostImageAccessibilityTextId()));
                 if (lGhostImageTxt != null) {
                     mGhostImage.setContentDescription(lGhostImageTxt.toString());
 
-                    if (!mCameraParamMgr.isPassport()) {
+                    if (!mDocType.isPassport()) {
                         mGhostText.setText(lGhostImageTxt);
                     }
                 }
@@ -676,7 +669,7 @@ public class CameraOverlay extends RelativeLayout {
 
             // For portrait mode, we need to switch the width and height,
             // since preference does not know orientation
-            if (Utils.getDeviceBasicOrientation(mActivityContext) == Configuration.ORIENTATION_PORTRAIT) {
+            if (Utils.getDeviceBasicOrientation(mAppContext) == Configuration.ORIENTATION_PORTRAIT) {
                 int temp = mPreviewWidth;
                 mPreviewWidth = mPreviewHeight;
                 mPreviewHeight = temp;
@@ -957,8 +950,8 @@ public class CameraOverlay extends RelativeLayout {
         mBugSequence = null;
         mFinalFrameArray = null;
         //clear the Activity handles
-        mActivityContext=null;
-        mAppContext=null;
+        //don't need to null out the application context, can't leak it
+//        mAppContext=null;
         //TODO:clean up instructionText
         System.gc();    //immediately clears the fragmented and unreferenced memory chunks out
 	}
@@ -1218,9 +1211,9 @@ public class CameraOverlay extends RelativeLayout {
         mHandler.postDelayed(mBugAnimationRunner, BUG_ANIMATION_TIME_MS);	// Trigger the stop
 
         if (ANIMATED_BUG) {
-            mBugSequence = MiSnapAnimation.createBugAnim(mBugImage, mActivityContext);
+            mBugSequence = MiSnapAnimation.createBugAnim(mBugImage, mAppContext);
         } else {
-            mBugSequence = MiSnapAnimation.createBugStill(mBugImage, mActivityContext);
+            mBugSequence = MiSnapAnimation.createBugStill(mBugImage, mAppContext);
         }
         Log.d("MiSnapAnim", "bugSequence.start()");	// removed by proguard
         EventBus.getDefault().post(new TextToSpeechEvent(getResources().getString(R.string.misnap_bug_message_ux2)));
@@ -1508,7 +1501,7 @@ public class CameraOverlay extends RelativeLayout {
                     if (mBalloonImage != null) {
                         mBalloonImage.setVisibility(View.INVISIBLE);
                     }
-                    mHandler.postDelayed(mBalloonCheckRunner, SMART_HINT_UPDATE_PERIOD);
+                    mHandler.postDelayed(mBalloonCheckRunner, mWorkflowParamMgr.getSmartHintUpdatePeriod());
                 }
 
                 @Override
@@ -1600,8 +1593,13 @@ public class CameraOverlay extends RelativeLayout {
     }
 
     private boolean shouldRotateGhostImage() {
-        return ((mCameraParamMgr.getRequestedOrientation() == MiSnapApi.PARAMETER_ORIENTATION_DEVICE_PORTRAIT_DOCUMENT_PORTRAIT
-                || mCameraParamMgr.getRequestedOrientation() == MiSnapApi.PARAMETER_ORIENTATION_DEVICE_FREE_DOCUMENT_ALIGNED_WITH_DEVICE)
+        return ((mWorkflowParamMgr.getRequestedOrientation() == MiSnapApi.PARAMETER_ORIENTATION_DEVICE_PORTRAIT_DOCUMENT_PORTRAIT
+                || mWorkflowParamMgr.getRequestedOrientation() == MiSnapApi.PARAMETER_ORIENTATION_DEVICE_FREE_DOCUMENT_ALIGNED_WITH_DEVICE)
                 && Utils.getDeviceBasicOrientation(mAppContext) == Configuration.ORIENTATION_PORTRAIT);
+    }
+
+    @VisibleForTesting
+    public Paint getAnimationRectanglePaint() {
+        return mDetectedRectanglePaint;
     }
 }

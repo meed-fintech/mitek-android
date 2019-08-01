@@ -2,9 +2,11 @@ package com.miteksystems.misnap.misnapworkflow_UX2;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.VisibleForTesting;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.WindowManager;
 
 import com.miteksystems.misnap.events.OnShutdownEvent;
@@ -157,6 +159,15 @@ public class MiSnapWorkflowActivity_UX2 extends AppCompatActivity implements
         return true;
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        if (mUxStateMachine != null) {
+            mUxStateMachine.onRotate();
+        }
+    }
+
 
     /**************************************************************************
      * All events from fragments are forwarded from this Activity
@@ -236,5 +247,10 @@ public class MiSnapWorkflowActivity_UX2 extends AppCompatActivity implements
     @Override
     public void onRetryAfterDetailedFailover() {
         mUxStateMachine.onRetryAfterDetailedFailover();
+    }
+
+    @VisibleForTesting
+    public void setNextState(int state) {
+        mUxStateMachine.nextMiSnapState(state);
     }
 }
