@@ -1,7 +1,7 @@
 package cordova.plugin.misnap;
 
 import java.util.List;
-//import java.util.Base64;
+import java.util.Base64;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -104,6 +104,7 @@ public class MiSnapCordovaPlugin extends CordovaPlugin {
                             // Now Base64-encode the byte array before sending it to the server.
                             // e.g. byte[] sEncodedImage = Base64.encode(sImage, Base64.DEFAULT);
                             //      sendToServer(sEncodedImage);
+                            String sEncodedImage = Base64.getEncoder().encodeToString(sImage);
 
                             String message = null;
                             List<String> warnings = extras.getStringArrayList(MiSnapApi.RESULT_WARNINGS);
@@ -115,7 +116,7 @@ public class MiSnapCordovaPlugin extends CordovaPlugin {
                             System.out.println("Image captured!  Warnings: " + warnings);
                             if (sImage != null)
                                 System.out.println("image size=" + sImage.length);
-                            _callback.success(sImage);
+                            _callback.success(sEncodedImage);
                             return;
                     }
                 } 
