@@ -53,20 +53,20 @@ dependencies {
     implementation "org.greenrobot:eventbus:$eventbusVersion"
 
     // Add dependency for MiSnap external API
-    implementation (project(':cordova-plugin-misnap-android:api-release'))
+    implementation (project(':cordova-plugin-mitek-android:api-release'))
 
-    implementation (project(':cordova-plugin-misnap-android:misnapcamera-release'))
+    implementation (project(':cordova-plugin-mitek-android:misnapcamera-release'))
 
-    implementation (project(':cordova-plugin-misnap-android:misnapscience-release'))
+    implementation (project(':cordova-plugin-mitek-android:misnapscience-release'))
 
     // Add dependency for MiSnap external MibiData
-    implementation (project(':cordova-plugin-misnap-android:mibidata-release'))
+    implementation (project(':cordova-plugin-mitek-android:mibidata-release'))
 
     // Add dependency for rotating bitmap
-    implementation (project(':cordova-plugin-misnap-android:imageutils-release'))
+    implementation (project(':cordova-plugin-mitek-android:imageutils-release'))
 
     // Add dependency for MiSnap
-    implementation project(':cordova-plugin-misnap-android:misnapcontroller')
+    implementation project(':cordova-plugin-mitek-android:misnapcontroller')
 
     // Add dependency for barcode scanning
     //implementation (project(':cordova-plugin-misnap:barcode-release'))

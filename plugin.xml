@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<plugin id="cordova-plugin-misnap-android" version="1.0.3" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<plugin id="cordova-plugin-mitek-android" version="1.0.3" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
 	<name>MiSnapCordovaPlugin</name>
 	<js-module name="MiSnapCordovaPlugin" src="www/MiSnapCordovaPlugin.js">
 		<clobbers target="cordova.plugins.MiSnapCordovaPlugin" />
