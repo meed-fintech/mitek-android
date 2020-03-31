@@ -50,11 +50,11 @@ dependencies {
     implementation "org.greenrobot:eventbus:$eventbusVersion"
     implementation 'pub.devrel:easypermissions:1.2.0'
 
-    implementation (project(':cordova-plugin-misnap:api-release'))
-    implementation (project(':cordova-plugin-misnap:imageutils-release'))
-    implementation (project(':cordova-plugin-misnap:mibidata-release'))
-    implementation (project(':cordova-plugin-misnap:misnapcamera-release'))
-    implementation (project(':cordova-plugin-misnap:misnapscience-release'))
+    implementation (project(':cordova-plugin-misnap-android:api-release'))
+    implementation (project(':cordova-plugin-misnap-android:imageutils-release'))
+    implementation (project(':cordova-plugin-misnap-android:mibidata-release'))
+    implementation (project(':cordova-plugin-misnap-android:misnapcamera-release'))
+    implementation (project(':cordova-plugin-misnap-android:misnapscience-release'))
 
 
 }
