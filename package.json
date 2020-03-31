@@ -1,17 +1,21 @@
 {
-  "name": "MiSnapCordovaPlugin",
-  "version": "0.0.1",
-  "description": "Cordova Plugin for MiSnap",
+   "name": "cordova-plugin-misnap-android",
+   "version": "1.0.2",
+   "description": "MiSnap Plugin Create By Meedbankingclub",
   "cordova": {
-    "id": "cordova-plugin-misnap",
+    "id": "cordova-plugin-misnap-android",
     "platforms": [
       "android"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/meed-fintech/mitek-android"
   },
   "keywords": [
     "ecosystem:cordova",
     "cordova-android"
   ],
-  "author": "",
+  "author": "Meedbankingclub",
   "license": "ISC"
 }
