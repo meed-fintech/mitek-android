@@ -1,6 +1,6 @@
 {
    "name": "cordova-plugin-misnap-android",
-   "version": "1.0.2",
+   "version": "1.0.3",
    "description": "MiSnap Plugin Create By Meedbankingclub",
   "cordova": {
     "id": "cordova-plugin-misnap-android",
